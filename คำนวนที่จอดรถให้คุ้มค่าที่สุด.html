@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คำนวณจำนวนช่องจอดรถ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            color: #333;
+        }
+        label {
+            display: block;
+            margin: 10px 0;
+        }
+        input[type="text"] {
+            width: 50px;
+            margin-left: 10px;
+        }
+        button {
+            margin-top: 10px;
+        }
+        #result {
+            margin-top: 20px;
+        }
+        canvas {
+            margin-top: 20px;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <h1>ฟังก์ชันคำนวณจำนวนช่องจอดรถในลานจอดรถ และพื้นที่ที่เหลือ พร้อมแสดงรูป</h1>
+    <div>
+        <label>ป้อนความกว้างของลานจอดรถ (เมตร): <input type="text" id="bigWidth"></label>
+        <label>ป้อนความยาวของลานจอดรถ (เมตร): <input type="text" id="bigHeight"></label>
+        <label>ป้อนความกว้างของช่องจอดรถ (เมตร): <input type="text" id="smallWidth"></label>
+        <label>ป้อนความยาวของช่องจอดรถ (เมตร): <input type="text" id="smallHeight"></label>
+        <label>ป้อนความกว้างของช่องทางเดินรถ (เมตร): <input type="text" id="laneWidth"></label>
+        <button onclick="calculateAndDisplayResults()">คำนวณ</button>
+    </div>
+    <div id="result"></div>
+    <canvas id="parkingCanvas"></canvas>
+    <p>------------------------------</p>
+    <p>หมายเหตุ : เป็นการคำนวณพื้นที่ที่คุ้มค่าที่สุด การจัดสรรพื้นที่ขึ้นอยู่กับที่ผู้ใช้งานต้องการ</p>
+
+    <script>
+        function calculateSmallRectanglesWithRemainder(bigWidth, bigHeight, smallWidth, smallHeight, laneWidth) {
+            const countWidth = Math.floor(bigWidth / smallWidth);
+            const countHeight = Math.floor((bigHeight + laneWidth) / (smallHeight + laneWidth));
+            const totalSmallRectangles = countWidth * countHeight;
+            const totalBigArea = bigWidth * bigHeight;
+            const totalUsedArea = totalSmallRectangles * (smallWidth * smallHeight);
+            const remainingArea = totalBigArea - totalUsedArea;
+            return [totalSmallRectangles, remainingArea, countWidth, countHeight];
+        }
+
+        function getInputValue(id) {
+            return parseFloat(document.getElementById(id).value);
+        }
+
+        function calculateAndDisplayResults() {
+            const bigWidth = getInputValue('bigWidth');
+            const bigHeight = getInputValue('bigHeight');
+            const smallWidth = getInputValue('smallWidth');
+            const smallHeight = getInputValue('smallHeight');
+            const laneWidth = getInputValue('laneWidth');
+
+            const [smallRectanglesCount, remainingArea, countWidth, countHeight] = calculateSmallRectanglesWithRemainder(
+                bigWidth, bigHeight, smallWidth, smallHeight, laneWidth
+            );
+
+            document.getElementById('result').innerHTML = `มีช่องจอดรถทั้งหมด ${smallRectanglesCount} ช่อง<br>พื้นที่ที่เหลือคือ ${remainingArea} ตารางเมตร`;
+
+            const canvas = document.getElementById('parkingCanvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = bigWidth;
+            canvas.height = bigHeight;
+
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.fillStyle = 'gray';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < countHeight; i++) {
+                for (let j = 0; j < countWidth; j++) {
+                    const x = j * smallWidth;
+                    const y = i * (smallHeight + laneWidth);
+                    context.fillStyle = (i + j) % 2 === 0 ? 'white' : 'blue';
+                    context.fillRect(x, y, smallWidth, smallHeight);
+
+                    if (i < countHeight - 1) {
+                        context.fillStyle = 'black';
+                        context.fillRect(x, y + smallHeight, smallWidth, laneWidth);
+                    }
+                }
+            }
+
+            context.fillStyle = 'black';
+            context.fillRect(0, countHeight * (smallHeight + laneWidth), bigWidth, laneWidth);
+            context.fillRect(0, 0, laneWidth, bigHeight);
+            context.fillRect(bigWidth - laneWidth, 0, laneWidth, bigHeight);
+        }
+    </script>
+</body>
+</html>
